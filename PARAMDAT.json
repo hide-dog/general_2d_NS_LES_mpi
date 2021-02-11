@@ -1,0 +1,77 @@
+# -- parameter --
+{
+# -- file name --
+"out_file_front":"haya", # 出力ファイル前半分
+"out_ext":".dat",         # 拡張子
+
+# -- restart --
+"Restart":"haya",         # 前半のファイル名
+"restartnum":"030000",     # 後半のファイル名（result/[Restart+restartnum+in_ext]で検索）
+"in_ext":".dat",
+
+# -- output --
+"init_small":"1.0e-50",       # 初期発散抑え用(陽解法ならいらない)
+"norm_ok":"1.0e-5",          # 収束条件(陽解法ならいらない)
+
+# -- time step --
+"time_integ":"1",      # 1 = explicit, 2 = lusgs
+"nt":"1.0e4",          # 時間ステップ数
+"dt":"5.0e-7",       # 時間刻み幅[s]
+"every_outnum":"1.0e3",      # 出力毎タイムステップ
+"inner_step":"20",       # 疑似時間ステップ数
+"dtau":"1.0e-2",       # 疑似時間刻み幅[s] don't use
+"CFL":"1.0e0",       # local time step
+
+# -- scheme --
+"advection":"2",               # 1 = AUSM+, (2 = AUSM+up, 4 = SLAU)
+
+# -- 初期値 --
+"init_rho":"1.0e0",     # 初期密度[kg/m^3]
+"init_u":"340.0",       # 初期x方向速度
+"init_v":"0.0",       # 初期y方向速度
+"init_p":"1.0e5",      # 初期圧力[Pa] don't use
+"init_T":"300.0",      # 初期温度[K]
+
+"specific_heat_ratio":"1.4", # 比熱比
+"Rd":"287.0",                   # 空気の気体定数[J/kgK]
+
+# -- boundary condition --
+# left_bd1 = 境界条件  0 = 流入
+#                     1 = 流出
+#                     2 = 滑り壁，対称境界
+#                     3 = 滑りなし壁（u=v=0）
+# left_bd2 = 境界値   0 = rho,u,v,p
+#                     1 = なし
+#                     2 = なし
+#                     3 = なし
+# x- --------------------------------
+"bd1_con":"4",
+"bd1_rho":"1.0",
+"bd1_u":"0.0",
+"bd1_v":"0.0",
+"bd1_p":"1.0",
+"bd1_T":"300.0",
+# x+ -------------------------------
+"bd2_con":"4",
+"bd2_rho":"1.0",
+"bd2_u":"0.0",
+"bd2_v":"0.0",
+"bd2_p":"1.0",
+"bd2_T":"300.0",
+# y- --------------------------------
+"bd3_con":"7",
+"bd3_rho":"1.0",
+"bd3_u":"0.0",
+"bd3_v":"0.0",
+"bd3_p":"1.0",
+"bd3_T":"300.0",
+# y+ --------------------------------
+"bd4_con":"6",
+"bd4_rho":"1.0",
+"bd4_u":"340.0",
+"bd4_v":"0.0",
+"bd4_p":"1.0e5",   #p=rhoRTより
+"bd4_T":"300.0",
+#--------------------------------
+"blank":"blank"
+}
