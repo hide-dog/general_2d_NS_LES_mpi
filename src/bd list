@@ -1,14 +1,19 @@
 boundary condition
 
-0 = inlet(use pressure)
-1 = outlet
-2 = slip wall
-3 = non-slip wall
-4 = symmetric conditions
+11 = inlet(use pressure)
+12 = inlet(use temperature)
 
-5 = inlet for O grid(use pressure)
-6 = inlet for O grid(use temperature)
+101 = inlet for O grid(use pressure)
+102 = inlet for O grid(use temperature)
 
-7 = non-slip isothermal wall
+21 = outlet(0 grad)
 
-8 = inlet(use temperature)
+31 = slip wall
+32 = non-slip wall
+33 = non-slip isothermal wall
+
+41 = symmetric conditions
+
+
+
+

@@ -62,8 +62,10 @@ function main()
                                                                 Qbase_all, volume_all, cellcenter_all, wally_all, dx_all, dy_all, num_div, rank)
     vecAx, vecAy = set_vecA_mpi(vecAx_all, vecAy_all, vecAx, vecAy, cellx_mpi, celly_mpi, num_div, rank)
 
+    set_boundary_number = set_boundary_number(bdcon,)
+
     # set initial condition for imaginary cell
-    Qbase    = set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, specific_heat_ratio, nval)
+    Qbase    = set_boundary(Qbase, cellx_mpi, celly_mpi, vecAx, vecAy, bdcon, Rd, specific_heat_ratio, nval)
 
     # write number of threads
     print("threads num : ")
