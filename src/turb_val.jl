@@ -4,13 +4,13 @@ function set_wally(nodes, bdcon, wally, cellcenter, cellxmax, cellymax)
 							# 1:壁
 	ite = 0
 	for i in 1:4
-		if Int(bdcon[i][1]) == 2
+		if Int(bdcon[i][1]) == 31
 			swith_wall[i] = 1
 			ite = 1
-		elseif Int(bdcon[i][1]) == 3
+		elseif Int(bdcon[i][1]) == 32
 			swith_wall[i] = 1
 			ite = 1
-		elseif Int(bdcon[i][1]) == 7
+		elseif Int(bdcon[i][1]) == 33
 			swith_wall[i] = 1
 			ite = 1
 		end

@@ -43,8 +43,8 @@ function common_mpi_allocation(cellxmax, cellymax, nval)
     dx = zeros(cellxmax+1, cellymax)                   # distance from cell center
     dy = zeros(cellxmax, cellymax+1)                   # distance from cell center
     
-    vecAx = zeros(cellxmax+1, cellymax)                # vecter Ax
-    vecAy = zeros(cellxmax, cellymax+1)                # vecter Ay
+    vecAx = zeros(cellxmax+1, cellymax, 2)                # vecter Ax
+    vecAy = zeros(cellxmax, cellymax+1, 2)                # vecter Ay
 
     E_adv_hat = zeros(cellxmax+1,   cellymax, nval)    # flux of advection in the x-direction
     F_adv_hat = zeros(  cellxmax, cellymax+1, nval)    # flux of advection in the y-direction

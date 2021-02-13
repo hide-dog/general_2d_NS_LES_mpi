@@ -48,7 +48,7 @@ function main()
 
     # mpi set up
     MPI.Init()
-    cellNx, ista, iend, cellNy, jsta, jend, num_div, rank = set_mpi(cellxmax, cellymax)
+    cellNx, ista, iend, cellNy, jsta, jend, num_div, rank, size, comm = set_mpi(cellxmax, cellymax)
     
     # number of mpi cells + virtual cell
     cellx_mpi = cellNx + 4
@@ -58,25 +58,24 @@ function main()
     Qbase, volume, cellcenter, wally, yplus, dx, dy, Qcon, Qcon_hat, mu, lambda, 
     vecAx, vecAy, E_adv_hat, F_adv_hat, E_vis_hat, F_vis_hat, RHS    = common_mpi_allocation(cellx_mpi, celly_mpi, nval)
 
-    Qbase, volume, cellcenter, wally, yplus, dx, dy = set_value_for_mpi(Qbase, cellx_mpi, celly_mpi, volume, cellcenter, wally, dx, dy,
-                                                                Qbase_all, volume_all, cellcenter_all, wally_all, dx_all, dy_all, num_div, rank)
+    Qbase, volume, cellcenter, wally, dx, dy = set_value_for_mpi(Qbase, cellx_mpi, celly_mpi, volume, cellcenter, wally, dx, dy,
+                                                    Qbase_all, volume_all, cellcenter_all, wally_all, dx_all, dy_all, nval, num_div, rank)
+    
     vecAx, vecAy = set_vecA_mpi(vecAx_all, vecAy_all, vecAx, vecAy, cellx_mpi, celly_mpi, num_div, rank)
 
-    set_boundary_number = set_boundary_number(bdcon,)
+    boundary_number = set_boundary_number(bdcon, rank, size)
+    
+    # check boundary condition
+    check_bd(bdcon)
 
     # set initial condition for imaginary cell
-    Qbase    = set_boundary(Qbase, cellx_mpi, celly_mpi, vecAx, vecAy, bdcon, Rd, specific_heat_ratio, nval)
+    Qbase    = set_boundary(Qbase, cellx_mpi, celly_mpi, vecAx, vecAy, bdcon, Rd, specific_heat_ratio, 
+                            nval, boundary_number, rank, size, comm)
 
     # write number of threads
     print("threads num : ")
     println(Threads.nthreads())
 
-    # check boundary condition
-    check_bd(bdcon)
-
-    # temp
-    Qbase[20,30,2] = 20.0
-        
     # main loop
     loop_ite = 0
     if time_integ == "1"
@@ -91,7 +90,8 @@ function main()
             evalnum = t + restartnum
             
             # set conserved variables in the general coordinate system
-            Qbase    = set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, specific_heat_ratio, nval)
+            Qbase    = set_boundary(Qbase, cellx_mpi, celly_mpi, vecAx, vecAy, bdcon, Rd, specific_heat_ratio, 
+                                    nval, boundary_number, rank, size, comm)
             Qcon     = base_to_conservative(Qbase, Qcon, cellxmax, cellymax, specific_heat_ratio)
             Qcon_hat = setup_Qcon_hat(Qcon, Qcon_hat, cellxmax, cellymax, volume, nval)
             

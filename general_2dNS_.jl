@@ -31,6 +31,9 @@ src_read="allocation.jl"
 include(src_path*src_read)
 src_read="cal_time_step.jl"
 include(src_path*src_read)
+
+src_main="mpi.jl"
+include(src_path*src_main)
 src_main="main.jl"
 include(src_path*src_main)
 

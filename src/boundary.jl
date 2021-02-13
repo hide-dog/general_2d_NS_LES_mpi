@@ -1,7 +1,316 @@
+function set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval, boundary_number, rank, size, comm)
+
+    divn = zeros(Int, 4)
+    temp = Array{Float64}(undef,2)
+    
+    # 2:imaginary cell
+    icell = 2
+    send_arrayx = zeros(cellxmax*icell*nval)
+    send_arrayy = zeros(cellymax*icell*nval)
+    rec_arrayx = zeros(cellxmax*icell*nval)
+    rec_arrayy = zeros(cellymax*icell*nval)
+
+    #println(boundary_number)
+
+    # x-
+    if boundary_number[1] == -41
+        # parallel with communication
+        
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in icell+1:icell+icell  # 周期境界条件
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # 送る
+        send_rank = rank + (size^0.5-1) * (size^0.5)
+        MPI.Isend(send_arrayy, send_rank, rank+200, comm)
+        
+        # cellから受け取る
+        rec = MPI.Irecv!(rec_arrayy, send_rank, send_rank+100, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        # 代入
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in icell+1:icell+icell
+                    Qbase[i,j,l] = rec_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+
+    elseif boundary_number[1] < 0
+        Qbase = boundary_condition_xm(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+    else
+        # parallel with communication
+        
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in 1:icell
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # south に送る
+        MPI.Isend(send_arrayy, boundary_number[2], rank+200, comm)
+        
+        # north of south cell から受け取る
+        rec = MPI.Irecv!(rec_arrayy, boundary_number[1], boundary_number[1]+100, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        # 代入
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in 1:icell
+                    Qbase[i,j,l] = rec_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+
+        # use ?
+        divn[1] = 1
+    end
+
+    # x+
+    if  boundary_number[2] == -41
+        # parallel with communication
+        
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in cellxmax-icell-(icell+1):cellxmax-icell  # 周期境界条件
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # 送る
+        send_rank = rank - (size^0.5-1) * (size^0.5)
+        MPI.Isend(send_arrayy, send_rank, rank+200, comm)
+        
+        # cellから受け取る
+        rec = MPI.Irecv!(rec_arrayy, send_rank, send_rank+100, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        # 代入
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in cellxmax-icell-(icell+1):cellxmax-icell  # 周期境界条件
+                    Qbase[i,j,l] = rec_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+
+    elseif boundary_number[2] < 0
+        Qbase = boundary_condition_xp(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+    else
+        # parallel with communication
+
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in cellxmax-icell+1:cellxmax
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # south に送る
+        MPI.Isend(send_arrayy, boundary_number[1], rank+100, comm)
+        
+        # north of south cell から受け取る
+        rec = MPI.Irecv!(rec_arrayy, boundary_number[2], boundary_number[2]+200, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        # 代入
+        ite = 1
+        for l in 1:nval
+            for j in 1:cellymax
+                for i in cellxmax-icell+1:cellxmax
+                    Qbase[i,j,l] = rec_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+
+        # use ?
+        divn[2] = 1
+    end
+
+    # y-
+    if  boundary_number[3] == -41
+        # parallel with communication
+        
+        ite = 1
+        for l in 1:nval
+            for j in icell+1:icell+icell  # 周期境界条件
+                for i in 1:cellxmax
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # 送る
+        send_rank = rank + (size^0.5-1)
+        MPI.Isend(send_arrayy, send_rank, rank+200, comm)
+        
+        # cellから受け取る
+        rec = MPI.Irecv!(rec_arrayy, send_rank, send_rank+100, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        # 代入
+        ite = 1
+        for l in 1:nval
+            for j in icell+1:icell+icell  # 周期境界条件
+                for i in 1:cellxmax
+                    Qbase[i,j,l] = rec_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+
+    elseif boundary_number[3] < 0
+        Qbase = boundary_condition_ym(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+    else
+        # parallel with communication
+        
+        ite = 1
+        for l in 1:nval
+            for j in 1:icell
+                for i in 1:cellymax
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # south に送る
+        MPI.Isend(send_arrayy, boundary_number[4], rank+400, comm)
+        
+        # north of south cell から受け取る
+        rec = MPI.Irecv!(rec_arrayy, boundary_number[3], boundary_number[3]+300, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        ite = 1
+        for l in 1:nval
+            for j in 1:icell
+                for i in 1:cellxmax
+                    Qbase[i,j,l] = send_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+
+        # use ?
+        divn[3] = 1
+    end
+
+    # y+
+    if boundary_number[4] == -41
+        
+        ite = 1
+        for l in 1:nval
+            for j in cellymax-icell-(icell+1):cellymax-icell  # 周期境界条件
+                for i in 1:cellxmax
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # 送る
+        send_rank = rank - (size^0.5-1)
+        MPI.Isend(send_arrayy, send_rank, rank+200, comm)
+        
+        # cellから受け取る
+        rec = MPI.Irecv!(rec_arrayy, send_rank, send_rank+100, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        # 代入
+        ite = 1
+        for l in 1:nval
+            for j in cellymax-icell-(icell+1):cellymax-icell  # 周期境界条件
+                for i in 1:cellxmax
+                    Qbase[i,j,l] = rec_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+    elseif boundary_number[4] < 0
+        Qbase = boundary_condition_yp(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+    else
+        # parallel with communication
+        
+        ite = 1
+        for l in 1:nval
+            for j in cellymax-icell+1:cellymax
+                for i in 1:cellymax
+                    send_arrayy[ite] = Qbase[i,j,l]
+                    ite += 1
+                end
+            end
+        end
+
+        # south に送る
+        MPI.Isend(send_arrayy, boundary_number[3], rank+300, comm)
+        
+        # north of south cell から受け取る
+        rec = MPI.Irecv!(rec_arrayy, boundary_number[4], boundary_number[4]+400, comm)
+        
+        # wait 
+        MPI.Waitall!([rec])
+        
+        ite = 1
+        for l in 1:nval
+            for j in cellymax-icell+1:cellymax
+                for i in 1:cellxmax
+                    Qbase[i,j,l] = send_arrayy[ite]
+                    ite += 1
+                end
+            end
+        end
+
+        # use ?
+        divn[4] = 1
+    end
+
+    return Qbase
+end
+
 # ------------------------------------
-# set boundary conditions
+# boundary conditions x- (x[1] & x[2])
 # ------------------------------------
-function set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+function boundary_condition_xm(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
     """
     bdcon[i][j]
     i : bd number(x-, x+, y-, y+)
@@ -66,6 +375,14 @@ function set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nva
         throw(UndefVarError(:x))
     end
 
+    return Qbase
+end
+
+# ------------------------------------
+# boundary conditions x+ (x[cellxmax-1] & x[cellxmax])
+# ------------------------------------
+function boundary_condition_xp(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+    
     # bd2 = x+
     if Int(bdcon[2][1]) == 11
         for j in 1:cellymax
@@ -118,6 +435,14 @@ function set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nva
         throw(UndefVarError(:x))
     end
 
+    return Qbase
+end
+
+# ------------------------------------
+# boundary conditions y- (y[1] & y[2])
+# ------------------------------------
+function boundary_condition_ym(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+    
     # bd3 = y-
     if Int(bdcon[3][1]) == 11
         for i in 1:cellxmax
@@ -187,6 +512,14 @@ function set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nva
         throw(UndefVarError(:x))
     end
 
+    return Qbase
+end
+
+# ------------------------------------
+# boundary conditions y+ (y[cellymax-1] & y[cellymax])
+# ------------------------------------
+function boundary_condition_yp(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nval)
+    
     # bd4 = y+
     if Int(bdcon[4][1]) == 11
         for i in 1:cellxmax
@@ -307,25 +640,93 @@ function set_boundary(Qbase, cellxmax, cellymax, vecAx, vecAy, bdcon, Rd, g, nva
     return Qbase
 end
 
+# ------------------------------------
+# check boundary condition
+# ------------------------------------
 function check_bd(bdcon)
     bdnum = [11, 12, 101, 102, 21, 31, 32, 33, 41]
     for l in 1:4
+        di = 0
         for nn in bdnum
             if Int(bdcon[l][1]) == nn
-            else
-                println("\n check boundary condition ! \n")
-                throw(UndefVarError(:x))
+                di = 1 
             end
+        end
+
+        if di == 0
+            println("\n check boundary condition ! \n")
+            throw(UndefVarError(:x))
         end
     end
 end
 
-function set_boundary_number(bdcon,)
+# ------------------------------------
+# set boundary condition number for mpi
+# ------------------------------------
+function set_boundary_number(bdcon, rank, size)
     #=
     bd_NSEW = [N, S, E, W]
     北南東西に対応する境界条件を入れる．
     number <  0 : 境界条件,bdcon
     number >= 0 : 対応するセルのrank
     =#
+    #=
+    evaluation system
+
+    parallel num = 4
+
+      rank      div(rank, size^0.5)    rem(rank, size^0.5)
+
+      2 | 3            1 | 1                  0 | 1
+     -------          -------                -------
+      0 | 1            0 | 0                  0 | 1
     
+    parallel num = 16
+
+          rank              div(rank, size^0.5)       rem(rank, size^0.5)
+
+    12 | 13 | 14 | 15          3  | 3 | 3  | 3          0  | 1 | 2  | 3  
+    ------------------        ------------------       ------------------
+    8  | 9  | 10 | 11          2  | 2 | 2  | 2          0  | 1 | 2  | 3  
+    ------------------        ------------------       ------------------
+    4  | 5  | 6  | 7           1  | 1 | 1  | 1          0  | 1 | 2  | 3  
+    ------------------        ------------------       ------------------
+    0  | 1  | 2  | 3           0  | 0 | 0  | 0          0  | 1 | 2  | 3  
+
+    0 : upper or left edge
+    sqrt(parallel)-1 : lower or right edge 
+
+    =#
+    bd_NSEW = zeros(Int, 4)
+    y = div(rank, size^0.5)
+    x = rem(rank, size^0.5)
+
+    if y == 0 && y == Int(size^0.5 - 1)
+        bd_NSEW[1] = - Int(bdcon[2][1])
+        bd_NSEW[2] = - Int(bdcon[1][1])
+    elseif y == 0
+        bd_NSEW[1] = rank + size
+        bd_NSEW[2] = - Int(bdcon[1][1])
+    elseif y == Int(size^0.5 - 1)
+        bd_NSEW[1] = - Int(bdcon[2][1])
+        bd_NSEW[2] = rank - size
+    else
+        bd_NSEW[1] = rank + size
+        bd_NSEW[2] = rank - size
+    end
+
+    if x == 0 && x == Int(size^0.5 - 1)
+        bd_NSEW[3] = - Int(bdcon[4][1])
+        bd_NSEW[4] = - Int(bdcon[3][1])
+    elseif x == 0
+        bd_NSEW[3] = rank + 1
+        bd_NSEW[4] = - Int(bdcon[3][1])
+    elseif x == Int(size^0.5 - 1)
+        bd_NSEW[3] = - Int(bdcon[4][1])
+        bd_NSEW[4] = rank - 1
+    else
+        bd_NSEW[3] = rank + 1
+        bd_NSEW[4] = rank - 1
+    end
+    return bd_NSEW
 end

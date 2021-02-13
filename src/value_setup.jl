@@ -217,12 +217,12 @@ function set_Minf(bdcon, specific_heat_ratio, Rd)
     p   = 0 
 
     for i in 1:4
-        if Int(bdcon[i][1]) == 0 || Int(bdcon[i][1]) == 5
+        if Int(bdcon[i][1]) == 11 || Int(bdcon[i][1]) == 101
             rho = bdcon[i][2]
             u   = bdcon[i][3]
             v   = bdcon[i][4]
             p   = bdcon[i][5]
-        elseif Int(bdcon[i][1]) == 6
+        elseif Int(bdcon[i][1]) == 12 || Int(bdcon[i][1]) == 102
             rho = bdcon[i][2]
             u   = bdcon[i][3]
             v   = bdcon[i][4]
